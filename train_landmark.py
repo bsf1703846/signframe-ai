@@ -81,8 +81,8 @@ def train(X, y, epochs=30, batch_size=64, lr=0.001, model_out="models/landmark_m
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.15, random_state=42, stratify=y)
     print(f"Train: {len(X_train)}  Val: {len(X_val)}  Classes: {len(set(y))}")
 
-    train_ds = TensorDataset(torch.tensor(X_train), torch.tensor(y_train))
-    val_ds = TensorDataset(torch.tensor(X_val), torch.tensor(y_val))
+    train_ds = TensorDataset(torch.tensor(X_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.long))
+    val_ds = TensorDataset(torch.tensor(X_val, dtype=torch.float32), torch.tensor(y_val, dtype=torch.long))
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_dl = DataLoader(val_ds, batch_size=batch_size)
 
@@ -136,7 +136,7 @@ def main():
     if args.smoke_test:
         print("Smoke test: random synthetic landmarks, 1 epoch")
         X = np.random.randn(480, 63).astype(np.float32)
-        y = np.random.randint(0, 24, size=480)
+        y = np.random.randint(0, 24, size=480, dtype=np.int64)
         train(X, y, epochs=1, model_out="models/smoke_test.pt")
         print("Smoke test PASSED - training code works.")
         return
