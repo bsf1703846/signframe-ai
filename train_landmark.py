@@ -83,7 +83,7 @@ def train(X, y, epochs=30, batch_size=64, lr=0.001, model_out="models/landmark_m
 
     train_ds = TensorDataset(torch.tensor(X_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.long))
     val_ds = TensorDataset(torch.tensor(X_val, dtype=torch.float32), torch.tensor(y_val, dtype=torch.long))
-    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=True)
     val_dl = DataLoader(val_ds, batch_size=batch_size)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
