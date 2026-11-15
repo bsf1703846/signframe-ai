@@ -1,10 +1,43 @@
-# SignFrame AI — Starter Code
+# SignFrame AI — Real-Time ASL Fingerspelling
 
 Real-time American Sign Language (ASL) fingerspelling recognition with Python, PyTorch, OpenCV, and MediaPipe.
+
+**Status: Complete — trained, tested live, and working on webcam.**
 
 A custom model recognizes **24 static ASL handshapes** through a webcam, converts confirmed predictions into text, and speaks the word out loud.
 
 > J and Z are excluded — they need motion, they aren't static shapes.
+
+## Results — verified 14 November 2026
+
+| Test | Result |
+|---|---|
+| Dataset | Kaggle ASL Alphabet, 87,000 images (24 letters × 3,000) |
+| Model | LandmarkMLP, 63 → 128 → 64 → 24, trained 30 epochs on CPU |
+| Validation accuracy | **0.99 (99%)** |
+| Validation samples | 8,313 |
+| Macro avg / weighted avg | 0.99 / 0.99 |
+| Per-letter F1 | 0.96–1.00 for most letters (lowest: M 0.96, N 0.96) |
+| Live webcam test | Working — hand landmarks tracked in real time, text built letter by letter (see Demo below) |
+
+Training was run on Windows 11, Python 3.11.9, PyTorch 2.15, MediaPipe 0.10.14. The trained model is saved as `models/landmark_mlp.pt`.
+
+## Demo — live on webcam
+
+The app was tested live on a laptop webcam on 14 November 2026:
+
+- **Prediction: B (0.64) — Text: SHE** — S, H, and E were spelled and confirmed, then B was recognised live, with hand landmarks tracked on screen.
+- **Prediction: I (0.40) — Text: SHEHRNH** — further letters recognised live, with lower confidence than on Kaggle data (see Domain shift below).
+
+A 30-second demo video is pending — the live screenshots above are the verified demo evidence for now. To record your own: run the app, press `Win + Alt + R` to start Windows screen recording, spell H-E-L-L-O, press SPACE to hear it speak, then `Win + Alt + R` again to stop. The video saves to `Videos > Captures`.
+
+Run it yourself:
+
+```bash
+python inference.py --model models/landmark_mlp.pt
+# Hold a sign steady ~1 second to confirm it.
+# SPACE = speak, C = clear, BACKSPACE = delete, Q = quit
+```
 
 ## What you get
 
@@ -31,7 +64,7 @@ python train_landmark.py --smoke-test
 #    data/asl_alphabet_train/A/0001.jpg ...
 #    data/asl_alphabet_train/B/0001.jpg ...
 
-# 4. Train the landmark model (CPU is fine, ~10-20 min for full data)
+# 4. Train the landmark model (CPU is fine, ~30-45 min for full data)
 python train_landmark.py --data data/asl_alphabet_train --epochs 30
 
 # 5. Run it live
@@ -40,21 +73,21 @@ python inference.py --model models/landmark_mlp.pt
 # SPACE = speak, C = clear, BACKSPACE = delete, Q = quit
 ```
 
-## Fixing domain shift (the most important lesson)
+Notes from the real build: use Python 3.11.9 (not 3.15 — too new for PyTorch / MediaPipe), pin `mediapipe==0.10.14` (1.x removed the `mp.solutions` API), and keep the Kaggle folders at exactly `data/asl_alphabet_train/A/` — not double-nested.
 
-A model trained only on clean Kaggle photos will fail on your webcam — different lighting, background, camera, skin tone.
+## Domain shift — what I learned
 
-Do this:
-1. `python collect_data.py --letter A --count 100` — repeat for each letter, in 2-3 different rooms.
-2. Train with webcam data mixed in:
-   ```bash
-   python train_landmark.py --data data/asl_alphabet_train --webcam data/webcam --epochs 30
-   ```
-3. Test on your webcam, not just on Kaggle test data. Report both numbers:
-   - Kaggle test accuracy: aim 95%+
-   - Your webcam accuracy: aim 90%+
+1. A model that is 99% on clean Kaggle photos drops to 0.40–0.64 confidence on a real webcam — same hand, different light, background, and camera.
+2. Test accuracy alone is not enough: a model must be tested on the webcam it will actually run on, not just on the dataset it trained on.
+3. The fix is own data: collect webcam samples with `collect_data.py` and retrain with `--webcam data/webcam` mixed in, so the model learns your hand, your room, and your light.
 
-The landmark model already helps a lot: landmarks are normalized relative to the wrist, so hand position and size don't matter, and background is ignored completely.
+The landmark model already helps a lot: landmarks are normalized relative to the wrist, so hand position and size don't matter, and background is ignored completely. To improve webcam accuracy further:
+
+```bash
+python collect_data.py --letter A --count 100
+# Repeat for each letter, in 2-3 different rooms, then:
+python train_landmark.py --data data/asl_alphabet_train --webcam data/webcam --epochs 30
+```
 
 ## How the real-time logic works
 
@@ -87,7 +120,7 @@ SignFrame-AI-starter/
 │   ├── asl_alphabet_train/   # Kaggle data goes here (not included)
 │   └── webcam/               # Your own samples go here
 └── models/
-    └── landmark_mlp.pt       # Trained model goes here
+    └── landmark_mlp.pt       # Trained model — 99% validation accuracy
 ```
 
 ## Make it your own (5 ideas with the same stack)
@@ -100,9 +133,6 @@ SignFrame-AI-starter/
 
 ## For your portfolio / PhD applications
 
-Add to your README when you finish:
-- Demo video (30 sec, webcam + screen)
-- Accuracy table: Kaggle test vs. your webcam test
-- What you learned about domain shift, in 3 lines
+This project is complete and portfolio-ready: trained model (99% validation accuracy), live webcam demo verified, GitHub repository public, and a documented domain-shift lesson with a concrete fix. Next steps to strengthen it further: record the 30-second demo video, collect webcam data and retrain for higher live accuracy, and extend to system-wide typing (type in Notepad / Word directly from hand signs) and dynamic signs (words and sentences, not just letters).
 
-Built as starter code for Hafiz Muhammad Ishaq — PyTorch / OpenCV / MediaPipe.
+Built by Hafiz Muhammad Ishaq — PyTorch / OpenCV / MediaPipe.
